@@ -233,34 +233,24 @@ export const Dashboard: React.FC = () => {
               View All <ArrowRight className="h-3 w-3 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-          <div className="bg-bullDark rounded-3xl p-8 text-white shadow-2xl space-y-8">
+          <div className="bg-bullDark rounded-3xl p-8 text-white shadow-2xl space-y-6">
             <div className="space-y-1">
               <p className="text-white/40 uppercase text-[10px] font-black tracking-[0.2em]">This Month Revenue</p>
               <h3 className="text-4xl font-black">{formatCurrency(revenueStats.currentMonth)}</h3>
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white/5 rounded-2xl p-4">
-                <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Total Rev</p>
-                <p className="text-lg font-bold truncate">{formatCurrency(revenueStats.total)}</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-white/5 rounded-2xl p-4 space-y-1">
+                <p className="text-white/40 uppercase text-[9px] font-black tracking-widest">Total Revenue</p>
+                <p className="text-xl font-black">{formatCurrency(revenueStats.total)}</p>
               </div>
-              <div className="bg-white/5 rounded-2xl p-4">
-                <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Today</p>
-                <p className="text-lg font-bold text-bullYellow">{formatCurrency(revenueStats.todayRevenue)}</p>
+              <div className="bg-white/5 rounded-2xl p-4 space-y-1">
+                <p className="text-white/40 uppercase text-[9px] font-black tracking-widest">Today</p>
+                <p className="text-xl font-black text-bullYellow">{formatCurrency(revenueStats.todayRevenue)}</p>
               </div>
-              <div className="bg-white/5 rounded-2xl p-4">
-                <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Payments</p>
-                <p className="text-lg font-bold">{revenueStats.paymentsCount}</p>
-              </div>
-            </div>
-
-            <div className="pt-4 border-t border-white/10">
-              <p className="text-white/40 uppercase text-[10px] font-black tracking-[0.2em] mb-4">Current Month Progress (Goal: ₹{(MONTHLY_GOAL / 100000).toFixed(0)}L)</p>
-              <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
-                <div
-                  className="bg-bullYellow h-full rounded-full"
-                  style={{ width: `${Math.min((revenueStats.currentMonth / MONTHLY_GOAL) * 100, 100)}%` }}
-                />
+              <div className="bg-white/5 rounded-2xl p-4 col-span-2 flex items-center justify-between">
+                <p className="text-white/40 uppercase text-[9px] font-black tracking-widest">Total Payments</p>
+                <p className="text-2xl font-black">{revenueStats.paymentsCount}</p>
               </div>
             </div>
           </div>
