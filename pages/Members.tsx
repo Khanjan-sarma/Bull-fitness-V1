@@ -133,6 +133,7 @@ export const Members: React.FC = () => {
   // Form States
   const [renewDuration, setRenewDuration] = useState('1');
   const [renewAmount, setRenewAmount] = useState('2000');
+  const [renewCustomDate, setRenewCustomDate] = useState('');
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -216,11 +217,21 @@ export const Members: React.FC = () => {
     if (!selectedMember) return;
     setSubmitting(true);
     try {
-      const currentEnd = new Date(selectedMember.membership_end);
+      let newEndDateStr: string;
 
-      const newEndDate = new Date(currentEnd);
-      newEndDate.setMonth(newEndDate.getMonth() + parseInt(renewDuration));
-      const newEndDateStr = newEndDate.toISOString().split('T')[0];
+      if (renewDuration === 'custom') {
+        if (!renewCustomDate) {
+          showToast('Please select a custom end date.', 'error');
+          setSubmitting(false);
+          return;
+        }
+        newEndDateStr = renewCustomDate;
+      } else {
+        const currentEnd = new Date(selectedMember.membership_end);
+        const newEndDate = new Date(currentEnd);
+        newEndDate.setMonth(newEndDate.getMonth() + parseInt(renewDuration));
+        newEndDateStr = newEndDate.toISOString().split('T')[0];
+      }
 
       // Update membership_end, set renewal_reminder = false
       const { error: updateError } = await supabase
@@ -403,15 +414,28 @@ export const Members: React.FC = () => {
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Duration</label>
               <select
                 value={renewDuration}
-                onChange={e => setRenewDuration(e.target.value)}
+                onChange={e => { setRenewDuration(e.target.value); if (e.target.value !== 'custom') setRenewCustomDate(''); }}
                 className="w-full bg-bullGray border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
               >
                 <option value="1">1 Month</option>
                 <option value="3">3 Months</option>
                 <option value="6">6 Months</option>
                 <option value="12">12 Months</option>
+                <option value="custom">Custom Date</option>
               </select>
             </div>
+            {renewDuration === 'custom' && (
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">New End Date</label>
+                <input
+                  type="date"
+                  value={renewCustomDate}
+                  onChange={e => setRenewCustomDate(e.target.value)}
+                  className="w-full bg-bullGray border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                  required
+                />
+              </div>
+            )}
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Amount (₹)</label>
               <input
@@ -435,24 +459,26 @@ export const Members: React.FC = () => {
 
       {isEditModalOpen && selectedMember && (
         <Modal onClose={() => setIsEditModalOpen(false)} title={`Edit - ${selectedMember.name}`}>
-          <form onSubmit={submitEdit} className="space-y-4">
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Full Name</label>
-              <input
-                type="text"
-                value={selectedMember.name}
-                onChange={e => setSelectedMember({ ...selectedMember, name: e.target.value } as Member)}
-                className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
-              />
-            </div>
-            <div>
-              <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</label>
-              <input
-                type="text"
-                value={selectedMember.phone}
-                onChange={e => setSelectedMember({ ...selectedMember, phone: e.target.value } as Member)}
-                className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
-              />
+          <form onSubmit={submitEdit} className="space-y-4 max-h-[70vh] overflow-y-auto custom-scrollbar pr-1">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2 sm:col-span-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Full Name</label>
+                <input
+                  type="text"
+                  value={selectedMember.name}
+                  onChange={e => setSelectedMember({ ...selectedMember, name: e.target.value } as Member)}
+                  className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                />
+              </div>
+              <div className="col-span-2 sm:col-span-1">
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</label>
+                <input
+                  type="text"
+                  value={selectedMember.phone}
+                  onChange={e => setSelectedMember({ ...selectedMember, phone: e.target.value } as Member)}
+                  className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                />
+              </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -480,6 +506,35 @@ export const Members: React.FC = () => {
                   <option value="Intermediate">Intermediate</option>
                   <option value="Advanced">Advanced</option>
                 </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Join Date</label>
+                <input
+                  type="date"
+                  value={selectedMember.join_date}
+                  onChange={e => setSelectedMember({ ...selectedMember, join_date: e.target.value } as Member)}
+                  className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Start</label>
+                <input
+                  type="date"
+                  value={selectedMember.membership_start}
+                  onChange={e => setSelectedMember({ ...selectedMember, membership_start: e.target.value } as Member)}
+                  className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                />
+              </div>
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">End</label>
+                <input
+                  type="date"
+                  value={selectedMember.membership_end}
+                  onChange={e => setSelectedMember({ ...selectedMember, membership_end: e.target.value } as Member)}
+                  className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                />
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
