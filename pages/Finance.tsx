@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../services/supabase';
-import { 
-  Landmark, DollarSign, TrendingUp, 
-  CreditCard, Search, Download, Filter, 
+import {
+  Landmark, DollarSign, TrendingUp,
+  CreditCard, Search, Download, Filter,
   ArrowUpRight, BarChart3
 } from 'lucide-react';
 
@@ -28,17 +28,17 @@ export const Finance: React.FC = () => {
         .from('payments')
         .select('*, members(name)')
         .order('paid_on', { ascending: false });
-      
+
       if (error) throw error;
       setPayments(data || []);
 
       const now = new Date();
       const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-      
+
       let total = 0;
       let monthTotal = 0;
       const monthlyMap: Record<string, number> = {};
-      
+
       data?.forEach(p => {
         const amt = Number(p.amount) || 0;
         total += amt;
@@ -88,6 +88,21 @@ export const Finance: React.FC = () => {
 
   const maxRevenue = Math.max(...monthlyData.map(d => d.revenue), 1);
 
+  const exportCSV = () => {
+    if (payments.length === 0) return;
+    const header = 'Member,Date,Amount,Next Due\n';
+    const rows = payments.map(p =>
+      `"${p.members?.name || 'Unknown'}",${p.paid_on},${p.amount},${p.next_due_date || '-'}`
+    ).join('\n');
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'bull-fitness-payments.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-10">
       {/* Header */}
@@ -97,7 +112,7 @@ export const Finance: React.FC = () => {
           <p className="text-gray-500 font-medium mt-1 uppercase text-xs tracking-widest">Real-time revenue monitoring and transaction history.</p>
         </div>
         <div className="flex gap-4">
-          <button className="px-6 py-3 bg-bullDark text-white rounded-xl font-bold hover:bg-bullDark/90 transition-all uppercase text-xs tracking-widest flex items-center">
+          <button onClick={exportCSV} className="px-6 py-3 bg-bullDark text-white rounded-xl font-bold hover:bg-bullDark/90 transition-all uppercase text-xs tracking-widest flex items-center">
             <Download className="h-4 w-4 mr-2" /> Export CSV
           </button>
         </div>
@@ -120,7 +135,7 @@ export const Finance: React.FC = () => {
             </h3>
             <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Last 6 Months</span>
           </div>
-          
+
           {stats.total === 0 ? (
             <div className="h-48 flex flex-col items-center justify-center text-gray-300 gap-2 border-2 border-dashed border-gray-100 rounded-2xl">
               <TrendingUp className="h-10 w-10 opacity-20" />
@@ -131,8 +146,8 @@ export const Finance: React.FC = () => {
               {monthlyData.map((d, i) => (
                 <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                   <div className="w-full bg-bullGray rounded-xl overflow-hidden relative h-48 border border-gray-50">
-                     <div 
-                      className="absolute bottom-0 left-0 right-0 bg-bullRed transition-all duration-700 ease-out rounded-xl group-hover:bg-bullYellow" 
+                    <div
+                      className="absolute bottom-0 left-0 right-0 bg-bullRed transition-all duration-700 ease-out rounded-xl group-hover:bg-bullYellow"
                       style={{ height: `${(d.revenue / maxRevenue) * 100}%` }}
                     />
                   </div>

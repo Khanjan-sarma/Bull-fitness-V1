@@ -7,8 +7,8 @@ export const AddMember: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [duration, setDuration] = useState('1'); 
-  const [totalAmount, setTotalAmount] = useState('2000'); 
+  const [duration, setDuration] = useState('1');
+  const [totalAmount, setTotalAmount] = useState('2000');
 
   const today = new Date().toISOString().split('T')[0];
 
@@ -27,10 +27,10 @@ export const AddMember: React.FC = () => {
     if (duration !== 'custom' && formData.membership_start) {
       const startDate = new Date(formData.membership_start);
       const months = parseInt(duration, 10);
-      
+
       startDate.setMonth(startDate.getMonth() + months);
       const newEndDate = startDate.toISOString().split('T')[0];
-      
+
       setFormData((prev) => ({
         ...prev,
         membership_end: newEndDate,
@@ -51,7 +51,7 @@ export const AddMember: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validations
     if (!formData.name.trim()) {
       setError("Full Name is required.");
@@ -97,7 +97,7 @@ export const AddMember: React.FC = () => {
         if (paymentError) throw paymentError;
       }
 
-      navigate('/members');
+      navigate('/members', { state: { memberAdded: true } });
     } catch (err: any) {
       setError(err.message || 'Failed to add member. Check your database permissions or input values.');
       setLoading(false);
@@ -121,7 +121,7 @@ export const AddMember: React.FC = () => {
         <form onSubmit={handleSubmit} className="p-6 space-y-8">
           {error && (
             <div className="bg-red-50 border border-red-100 rounded-md p-4 text-sm text-red-700 flex items-center gap-3">
-              <AlertCircle className="h-5 w-5 flex-shrink-0" /> 
+              <AlertCircle className="h-5 w-5 flex-shrink-0" />
               <span>{error}</span>
             </div>
           )}
@@ -280,9 +280,8 @@ export const AddMember: React.FC = () => {
                     value={formData.membership_end}
                     onChange={handleChange}
                     readOnly={duration !== 'custom'}
-                    className={`shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border transition-shadow ${
-                      duration !== 'custom' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
-                    }`}
+                    className={`shadow-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full sm:text-sm border-gray-300 rounded-md py-2 px-3 border transition-shadow ${duration !== 'custom' ? 'bg-gray-100 text-gray-500 cursor-not-allowed' : ''
+                      }`}
                   />
                 </div>
               </div>

@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { calculateStatus } from '../utils/statusUtils';
-import { 
-  Users, UserCheck, AlertCircle, XCircle, 
-  TrendingUp, CalendarDays, 
+import {
+  Users, UserCheck, AlertCircle, XCircle,
+  TrendingUp, CalendarDays,
   Clock, CalendarClock, AlertOctagon, History,
   UserPlus, CalendarOff, ArrowRight
 } from 'lucide-react';
+
+const MONTHLY_GOAL = 200000; // ₹2L — change this to adjust the goal
 
 interface MonthlyRevenue {
   sortKey: string;
@@ -24,7 +26,7 @@ interface AlertMember {
 
 export const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
-  
+
   const [memberStats, setMemberStats] = useState({
     total: 0,
     active: 0,
@@ -35,6 +37,7 @@ export const Dashboard: React.FC = () => {
   const [revenueStats, setRevenueStats] = useState({
     total: 0,
     currentMonth: 0,
+    todayRevenue: 0,
     paymentsCount: 0,
   });
 
@@ -105,8 +108,10 @@ export const Dashboard: React.FC = () => {
       if (paymentsResponse.data) {
         let totalRev = 0;
         let currentMonthRev = 0;
+        let todayRev = 0;
         const now = new Date();
         const currentMonthStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+        const todayStr = now.toISOString().split('T')[0];
 
         paymentsResponse.data.forEach((payment) => {
           const amt = Number(payment.amount) || 0;
@@ -114,11 +119,15 @@ export const Dashboard: React.FC = () => {
           if (payment.paid_on && payment.paid_on.startsWith(currentMonthStr)) {
             currentMonthRev += amt;
           }
+          if (payment.paid_on === todayStr) {
+            todayRev += amt;
+          }
         });
 
         setRevenueStats({
           total: totalRev,
           currentMonth: currentMonthRev,
+          todayRevenue: todayRev,
           paymentsCount: paymentsResponse.data.length,
         });
       }
@@ -165,7 +174,7 @@ export const Dashboard: React.FC = () => {
             <CalendarDays className="h-4 w-4" /> {todayStr}
           </p>
         </div>
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-4">
           <Link
             to="/off-days"
             className="px-6 py-3 border-2 border-bullDark rounded-xl text-bullDark font-bold hover:bg-bullDark hover:text-white transition-all uppercase text-sm tracking-widest flex items-center"
@@ -229,11 +238,15 @@ export const Dashboard: React.FC = () => {
               <p className="text-white/40 uppercase text-[10px] font-black tracking-[0.2em]">This Month Revenue</p>
               <h3 className="text-4xl font-black">{formatCurrency(revenueStats.currentMonth)}</h3>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
+
+            <div className="grid grid-cols-3 gap-4">
               <div className="bg-white/5 rounded-2xl p-4">
                 <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Total Rev</p>
                 <p className="text-lg font-bold truncate">{formatCurrency(revenueStats.total)}</p>
+              </div>
+              <div className="bg-white/5 rounded-2xl p-4">
+                <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Today</p>
+                <p className="text-lg font-bold text-bullYellow">{formatCurrency(revenueStats.todayRevenue)}</p>
               </div>
               <div className="bg-white/5 rounded-2xl p-4">
                 <p className="text-white/40 uppercase text-[8px] font-black tracking-widest">Payments</p>
@@ -242,11 +255,11 @@ export const Dashboard: React.FC = () => {
             </div>
 
             <div className="pt-4 border-t border-white/10">
-              <p className="text-white/40 uppercase text-[10px] font-black tracking-[0.2em] mb-4">Current Month Progress (Goal: ₹2L)</p>
+              <p className="text-white/40 uppercase text-[10px] font-black tracking-[0.2em] mb-4">Current Month Progress (Goal: ₹{(MONTHLY_GOAL / 100000).toFixed(0)}L)</p>
               <div className="w-full bg-white/10 h-3 rounded-full overflow-hidden">
-                <div 
-                  className="bg-bullYellow h-full rounded-full" 
-                  style={{ width: `${Math.min((revenueStats.currentMonth / 200000) * 100, 100)}%` }}
+                <div
+                  className="bg-bullYellow h-full rounded-full"
+                  style={{ width: `${Math.min((revenueStats.currentMonth / MONTHLY_GOAL) * 100, 100)}%` }}
                 />
               </div>
             </div>

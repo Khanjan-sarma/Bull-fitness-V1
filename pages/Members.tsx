@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Member } from '../types';
 import { calculateStatus } from '../utils/statusUtils';
@@ -121,6 +121,7 @@ export const Members: React.FC = () => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('All');
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
   // Modal States
@@ -147,6 +148,15 @@ export const Members: React.FC = () => {
     fetchMembers();
   }, []);
 
+  // Show success toast when arriving from Add Member
+  const location = useLocation();
+  useEffect(() => {
+    if (location.state && (location.state as any).memberAdded) {
+      showToast('Member added successfully!', 'success');
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
   const fetchMembers = async () => {
     try {
       const { data, error } = await supabase
@@ -164,9 +174,12 @@ export const Members: React.FC = () => {
 
   const filteredMembers = members
     .filter(
-      (member) =>
-        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        member.phone.includes(searchTerm)
+      (member) => {
+        const matchesSearch = member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          member.phone.includes(searchTerm);
+        const matchesStatus = statusFilter === 'All' || calculateStatus(member.membership_end) === statusFilter;
+        return matchesSearch && matchesStatus;
+      }
     )
     .sort((a, b) => {
       const statusA = calculateStatus(a.membership_end);
@@ -175,7 +188,6 @@ export const Members: React.FC = () => {
       if (priority[statusA] !== priority[statusB]) {
         return priority[statusA] - priority[statusB];
       }
-      // Within same status, sort by closest expiry date first
       return new Date(a.membership_end).getTime() - new Date(b.membership_end).getTime();
     });
 
@@ -303,6 +315,18 @@ export const Members: React.FC = () => {
     }
   };
 
+  const deletePayment = async (paymentId: string) => {
+    if (!window.confirm('Delete this payment record?')) return;
+    try {
+      const { error } = await supabase.from('payments').delete().eq('id', paymentId);
+      if (error) throw error;
+      setPayments(prev => prev.filter(p => p.id !== paymentId));
+      showToast('Payment deleted.', 'success');
+    } catch (err) {
+      showToast('Failed to delete payment.', 'error');
+    }
+  };
+
   return (
     <div className="space-y-10">
       {toast && (
@@ -342,11 +366,33 @@ export const Members: React.FC = () => {
           <input
             type="text"
             className="block w-full pl-12 pr-4 py-4 border-2 border-gray-50 rounded-2xl leading-5 bg-bullGray placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-bullRed focus:border-bullRed sm:text-sm font-bold transition-all"
-            placeholder="Search by name, phone or status..."
+            placeholder="Search by name or phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        <div className="flex items-center gap-2 mt-4">
+          {['All', 'Active', 'Due', 'Expired'].map((status) => {
+            const colorMap: Record<string, string> = {
+              All: statusFilter === 'All' ? 'bg-bullDark text-white' : 'bg-bullGray text-gray-500 hover:bg-gray-200',
+              Active: statusFilter === 'Active' ? 'bg-emerald-600 text-white' : 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100',
+              Due: statusFilter === 'Due' ? 'bg-bullYellow text-bullDark' : 'bg-yellow-50 text-bullYellow hover:bg-yellow-100',
+              Expired: statusFilter === 'Expired' ? 'bg-bullRed text-white' : 'bg-red-50 text-bullRed hover:bg-red-100',
+            };
+            return (
+              <button
+                key={status}
+                onClick={() => setStatusFilter(status)}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${colorMap[status]}`}
+              >
+                {status}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] font-black uppercase tracking-widest text-gray-400 mt-3 ml-1">
+          Showing {filteredMembers.length} of {members.length} members
+        </p>
       </section>
 
       {/* Members Grid */}
@@ -585,7 +631,16 @@ export const Members: React.FC = () => {
                       <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.paid_on}</p>
                     </div>
                   </div>
-                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest">Success</span>
+                  <div className="flex items-center gap-2">
+                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest">Success</span>
+                    <button
+                      onClick={() => deletePayment(p.id)}
+                      className="p-1.5 rounded-lg text-gray-300 hover:text-bullRed hover:bg-red-50 transition-all"
+                      title="Delete payment"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               ))
             )}
