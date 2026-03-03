@@ -3,8 +3,8 @@ import { Link } from 'react-router-dom';
 import { supabase } from '../services/supabase';
 import { Member } from '../types';
 import { calculateStatus } from '../utils/statusUtils';
-import { 
-  Search, UserPlus, Edit2, RefreshCw, X, Receipt, 
+import {
+  Search, UserPlus, Edit2, RefreshCw, X, Receipt,
   Trash2, CheckCircle, AlertCircle, Users, Phone,
   Calendar, Target, Activity, DollarSign, Maximize2
 } from 'lucide-react';
@@ -45,10 +45,10 @@ const Modal: React.FC<{ children: React.ReactNode, onClose: () => void, title: s
 /**
  * MemberCard component for displaying member summary
  */
-const MemberCard: React.FC<{ 
-  member: Member, 
-  onRenew: () => void, 
-  onEdit: () => void, 
+const MemberCard: React.FC<{
+  member: Member,
+  onRenew: () => void,
+  onEdit: () => void,
   onPayments: () => void,
   onAvatarClick: (member: Member) => void
 }> = ({ member, onRenew, onEdit, onPayments, onAvatarClick }) => {
@@ -63,21 +63,21 @@ const MemberCard: React.FC<{
     <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all relative overflow-hidden group">
       {/* Decorative corner accent */}
       <div className={`absolute top-0 right-0 w-24 h-24 -mr-12 -mt-12 rounded-full opacity-10 transition-transform group-hover:scale-110 ${status === 'Active' ? 'bg-emerald-500' : status === 'Due' ? 'bg-bullYellow' : 'bg-bullRed'}`} />
-      
-      <div className="flex items-start justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <button 
+
+      <div className="flex items-start justify-between mb-6 min-w-0">
+        <div className="flex items-center gap-4 min-w-0 overflow-hidden">
+          <button
             onClick={() => onAvatarClick(member)}
-            className="w-16 h-16 rounded-2xl bg-bullGray flex items-center justify-center font-black text-2xl text-bullDark shadow-inner border border-white hover:border-bullRed transition-all relative group/avatar overflow-hidden"
+            className="w-16 h-16 rounded-2xl bg-bullGray flex-shrink-0 flex items-center justify-center font-black text-2xl text-bullDark shadow-inner border border-white hover:border-bullRed transition-all relative group/avatar overflow-hidden"
           >
             {member.name.charAt(0)}
             <div className="absolute inset-0 bg-bullDark/20 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
               <Maximize2 className="h-5 w-5 text-white" />
             </div>
           </button>
-          <div className="min-w-0">
+          <div className="min-w-0 overflow-hidden">
             <h3 className="text-xl font-black text-bullDark leading-tight mb-1 group-hover:text-bullRed transition-colors truncate">{member.name}</h3>
-            <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColors[status as keyof typeof statusColors]}`}>
+            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColors[status as keyof typeof statusColors]}`}>
               {status}
             </span>
           </div>
@@ -92,22 +92,22 @@ const MemberCard: React.FC<{
       </div>
 
       <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-50">
-        <button 
+        <button
           onClick={onRenew}
           className="py-3 bg-bullRed text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-900/10 transition-all flex items-center justify-center gap-2"
         >
           <RefreshCw className="h-3 w-3" /> Renew
         </button>
-        <button 
+        <button
           onClick={onPayments}
           className="py-3 border-2 border-bullGray text-bullDark rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-bullGray transition-all flex items-center justify-center gap-2"
         >
           <Receipt className="h-3 w-3" /> Payments
         </button>
       </div>
-      
+
       {/* Absolute floating edit button */}
-      <button 
+      <button
         onClick={onEdit}
         className="absolute top-6 right-6 p-2 rounded-full bg-bullGray text-gray-400 hover:bg-bullRed hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
       >
@@ -205,20 +205,18 @@ export const Members: React.FC = () => {
     if (!selectedMember) return;
     setSubmitting(true);
     try {
-      const today = new Date();
       const currentEnd = new Date(selectedMember.membership_end);
-      const baseDate = currentEnd < today ? today : currentEnd;
-      
-      const newEndDate = new Date(baseDate);
+
+      const newEndDate = new Date(currentEnd);
       newEndDate.setMonth(newEndDate.getMonth() + parseInt(renewDuration));
       const newEndDateStr = newEndDate.toISOString().split('T')[0];
 
       // Update membership_end, set renewal_reminder = false
       const { error: updateError } = await supabase
         .from('members')
-        .update({ 
+        .update({
           membership_end: newEndDateStr,
-          renewal_reminder: false 
+          renewal_reminder: false
         })
         .eq('id', selectedMember.id);
 
@@ -287,9 +285,9 @@ export const Members: React.FC = () => {
       {toast && (
         <div className="fixed top-20 right-4 z-[100] flex items-center p-4 rounded-2xl shadow-2xl animate-fade-in-down max-w-sm w-full bg-white border-2 border-bullGray">
           {toast.type === 'success' ? (
-             <CheckCircle className="flex-shrink-0 w-5 h-5 mr-3 text-emerald-500" />
+            <CheckCircle className="flex-shrink-0 w-5 h-5 mr-3 text-emerald-500" />
           ) : (
-             <AlertCircle className="flex-shrink-0 w-5 h-5 mr-3 text-bullRed" />
+            <AlertCircle className="flex-shrink-0 w-5 h-5 mr-3 text-bullRed" />
           )}
           <div className="font-bold text-bullDark text-sm">{toast.message}</div>
           <button onClick={() => setToast(null)} className="ml-auto text-gray-400 hover:text-bullDark">
@@ -337,10 +335,10 @@ export const Members: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-8">
           {filteredMembers.length > 0 ? (
             filteredMembers.map((member) => (
-              <MemberCard 
-                key={member.id} 
-                member={member} 
-                onRenew={() => handleRenew(member)} 
+              <MemberCard
+                key={member.id}
+                member={member}
+                onRenew={() => handleRenew(member)}
                 onEdit={() => handleEdit(member)}
                 onPayments={() => handlePayments(member)}
                 onAvatarClick={(m) => setExpandedAvatarMember(m)}
@@ -357,18 +355,18 @@ export const Members: React.FC = () => {
 
       {/* Image Expansion Overlay (Avatar Expansion) */}
       {expandedAvatarMember && (
-        <div 
+        <div
           className="fixed inset-0 z-[200] bg-bullDark/95 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
           onClick={() => setExpandedAvatarMember(null)}
         >
-          <button 
+          <button
             onClick={(e) => { e.stopPropagation(); setExpandedAvatarMember(null); }}
             className="absolute top-6 right-6 p-4 bg-white/10 text-white rounded-full hover:bg-white/20 transition-all border border-white/10"
           >
             <X className="h-8 w-8" />
           </button>
           <div className="max-w-xl w-full flex flex-col items-center">
-            <div 
+            <div
               className="w-64 h-64 sm:w-80 sm:h-80 rounded-[3rem] bg-bullGray flex items-center justify-center text-8xl font-black text-bullRed shadow-2xl border-4 border-bullRed/20 transform animate-scale-in"
               onClick={(e) => e.stopPropagation()}
             >
@@ -376,7 +374,7 @@ export const Members: React.FC = () => {
             </div>
             <h2 className="text-3xl font-black text-white uppercase tracking-tighter mt-10 text-center">{expandedAvatarMember.name}</h2>
             <p className="text-bullYellow font-black uppercase tracking-[0.2em] text-sm mt-2">Active Warrior</p>
-            <button 
+            <button
               onClick={() => setExpandedAvatarMember(null)}
               className="mt-8 px-8 py-3 bg-white/10 text-white rounded-xl font-bold text-xs uppercase tracking-widest hover:bg-white/20 transition-all"
             >
@@ -392,8 +390,8 @@ export const Members: React.FC = () => {
           <form onSubmit={submitRenewal} className="space-y-6">
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Duration</label>
-              <select 
-                value={renewDuration} 
+              <select
+                value={renewDuration}
                 onChange={e => setRenewDuration(e.target.value)}
                 className="w-full bg-bullGray border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
               >
@@ -405,16 +403,16 @@ export const Members: React.FC = () => {
             </div>
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Amount (₹)</label>
-              <input 
-                type="number" 
-                value={renewAmount} 
+              <input
+                type="number"
+                value={renewAmount}
                 onChange={e => setRenewAmount(e.target.value)}
                 className="w-full bg-bullGray border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
                 required
               />
             </div>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={submitting}
               className="w-full py-4 bg-bullRed text-white rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-red-900/10 disabled:opacity-50"
             >
@@ -429,28 +427,28 @@ export const Members: React.FC = () => {
           <form onSubmit={submitEdit} className="space-y-4">
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Full Name</label>
-              <input 
-                type="text" 
-                value={selectedMember.name} 
-                onChange={e => setSelectedMember({...selectedMember, name: e.target.value} as Member)}
+              <input
+                type="text"
+                value={selectedMember.name}
+                onChange={e => setSelectedMember({ ...selectedMember, name: e.target.value } as Member)}
                 className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
               />
             </div>
             <div>
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Phone</label>
-              <input 
-                type="text" 
-                value={selectedMember.phone} 
-                onChange={e => setSelectedMember({...selectedMember, phone: e.target.value} as Member)}
+              <input
+                type="text"
+                value={selectedMember.phone}
+                onChange={e => setSelectedMember({ ...selectedMember, phone: e.target.value } as Member)}
                 className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
               />
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Goal</label>
-                <select 
-                  value={selectedMember.goal || ''} 
-                  onChange={e => setSelectedMember({...selectedMember, goal: e.target.value} as Member)}
+                <select
+                  value={selectedMember.goal || ''}
+                  onChange={e => setSelectedMember({ ...selectedMember, goal: e.target.value } as Member)}
                   className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
                 >
                   <option value="">None</option>
@@ -461,9 +459,9 @@ export const Members: React.FC = () => {
               </div>
               <div>
                 <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-1">Level</label>
-                <select 
-                  value={selectedMember.fitness_level || ''} 
-                  onChange={e => setSelectedMember({...selectedMember, fitness_level: e.target.value} as Member)}
+                <select
+                  value={selectedMember.fitness_level || ''}
+                  onChange={e => setSelectedMember({ ...selectedMember, fitness_level: e.target.value } as Member)}
                   className="w-full bg-bullGray border-none rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
                 >
                   <option value="">None</option>
@@ -474,15 +472,15 @@ export const Members: React.FC = () => {
               </div>
             </div>
             <div className="flex flex-col sm:flex-row gap-3 pt-6">
-              <button 
-                type="button" 
+              <button
+                type="button"
                 onClick={deleteMember}
                 className="flex-1 py-3 border-2 border-red-50 text-bullRed rounded-xl font-black uppercase tracking-widest text-[10px] hover:bg-red-50"
               >
                 Delete Member
               </button>
-              <button 
-                type="submit" 
+              <button
+                type="submit"
                 disabled={submitting}
                 className="flex-[2] py-3 bg-bullRed text-white rounded-xl font-black uppercase tracking-widest text-[10px] shadow-lg disabled:opacity-50"
               >
