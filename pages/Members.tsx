@@ -132,7 +132,7 @@ export const Members: React.FC = () => {
 
   // Form States
   const [renewDuration, setRenewDuration] = useState('1');
-  const [renewAmount, setRenewAmount] = useState('2000');
+  const [renewAmount, setRenewAmount] = useState('1000');
   const [renewCustomDate, setRenewCustomDate] = useState('');
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
@@ -183,7 +183,8 @@ export const Members: React.FC = () => {
   const handleRenew = (member: Member) => {
     setSelectedMember(member);
     setRenewDuration('1');
-    setRenewAmount('2000');
+    setRenewAmount('1000');
+    setRenewCustomDate('');
     setIsRenewModalOpen(true);
   };
 
@@ -414,7 +415,17 @@ export const Members: React.FC = () => {
               <label className="text-[10px] font-black uppercase tracking-widest text-gray-400 block mb-2">Duration</label>
               <select
                 value={renewDuration}
-                onChange={e => { setRenewDuration(e.target.value); if (e.target.value !== 'custom') setRenewCustomDate(''); }}
+                onChange={e => {
+                  const val = e.target.value;
+                  setRenewDuration(val);
+                  if (val === 'custom') {
+                    setRenewAmount('');
+                    setRenewCustomDate('');
+                  } else {
+                    setRenewAmount((parseInt(val) * 1000).toString());
+                    setRenewCustomDate('');
+                  }
+                }}
                 className="w-full bg-bullGray border-none rounded-2xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-bullRed"
               >
                 <option value="1">1 Month</option>
