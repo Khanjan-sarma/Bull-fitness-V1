@@ -60,47 +60,47 @@ const MemberCard: React.FC<{
   };
 
   return (
-    <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all relative overflow-hidden group">
+    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-2xl hover:scale-[1.02] transition-all relative overflow-hidden group">
       {/* Decorative corner accent */}
-      <div className={`absolute top-0 right-0 w-24 h-24 -mr-12 -mt-12 rounded-full opacity-10 transition-transform group-hover:scale-110 ${status === 'Active' ? 'bg-emerald-500' : status === 'Due' ? 'bg-bullYellow' : 'bg-bullRed'}`} />
+      <div className={`absolute top-0 right-0 w-20 h-20 -mr-10 -mt-10 rounded-full opacity-10 transition-transform group-hover:scale-110 ${status === 'Active' ? 'bg-emerald-500' : status === 'Due' ? 'bg-bullYellow' : 'bg-bullRed'}`} />
 
-      <div className="flex items-start justify-between mb-6 min-w-0">
-        <div className="flex items-center gap-4 min-w-0 overflow-hidden">
+      <div className="flex items-start justify-between mb-4 min-w-0">
+        <div className="flex items-center gap-3 min-w-0 overflow-hidden">
           <button
             onClick={() => onAvatarClick(member)}
-            className="w-16 h-16 rounded-2xl bg-bullGray flex-shrink-0 flex items-center justify-center font-black text-2xl text-bullDark shadow-inner border border-white hover:border-bullRed transition-all relative group/avatar overflow-hidden"
+            className="w-12 h-12 rounded-xl bg-bullGray flex-shrink-0 flex items-center justify-center font-black text-lg text-bullDark shadow-inner border border-white hover:border-bullRed transition-all relative group/avatar overflow-hidden"
           >
             {member.name.charAt(0)}
             <div className="absolute inset-0 bg-bullDark/20 flex items-center justify-center opacity-0 group-hover/avatar:opacity-100 transition-opacity">
-              <Maximize2 className="h-5 w-5 text-white" />
+              <Maximize2 className="h-4 w-4 text-white" />
             </div>
           </button>
           <div className="min-w-0 overflow-hidden">
-            <h3 className="text-xl font-black text-bullDark leading-tight mb-1 group-hover:text-bullRed transition-colors truncate">{member.name}</h3>
-            <span className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest border ${statusColors[status as keyof typeof statusColors]}`}>
+            <h3 className="text-lg font-black text-bullDark leading-tight mb-1 group-hover:text-bullRed transition-colors truncate">{member.name}</h3>
+            <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${statusColors[status as keyof typeof statusColors]}`}>
               {status}
             </span>
           </div>
         </div>
       </div>
 
-      <div className="space-y-3 mb-8">
+      <div className="space-y-2 mb-4">
         <InfoLine icon={<Phone />} label="Phone" value={member.phone} />
         <InfoLine icon={<Calendar />} label="Expires" value={member.membership_end} bold />
         {member.goal && <InfoLine icon={<Target />} label="Goal" value={member.goal} />}
         {member.fitness_level && <InfoLine icon={<Activity />} label="Level" value={member.fitness_level} />}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 pt-6 border-t border-gray-50">
+      <div className="grid grid-cols-2 gap-2 pt-4 border-t border-gray-50">
         <button
           onClick={onRenew}
-          className="py-3 bg-bullRed text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-900/10 transition-all flex items-center justify-center gap-2"
+          className="py-2.5 bg-bullRed text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-700 shadow-lg shadow-red-900/10 transition-all flex items-center justify-center gap-2"
         >
           <RefreshCw className="h-3 w-3" /> Renew
         </button>
         <button
           onClick={onPayments}
-          className="py-3 border-2 border-bullGray text-bullDark rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-bullGray transition-all flex items-center justify-center gap-2"
+          className="py-2.5 border-2 border-bullGray text-bullDark rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-bullGray transition-all flex items-center justify-center gap-2"
         >
           <Receipt className="h-3 w-3" /> Payments
         </button>
@@ -109,9 +109,9 @@ const MemberCard: React.FC<{
       {/* Absolute floating edit button */}
       <button
         onClick={onEdit}
-        className="absolute top-6 right-6 p-2 rounded-full bg-bullGray text-gray-400 hover:bg-bullRed hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+        className="absolute top-4 right-4 p-2 rounded-full bg-bullGray text-gray-400 hover:bg-bullRed hover:text-white transition-all opacity-0 group-hover:opacity-100 shadow-sm"
       >
-        <Edit2 className="h-4 w-4" />
+        <Edit2 className="h-3.5 w-3.5" />
       </button>
     </div>
   );
@@ -161,11 +161,22 @@ export const Members: React.FC = () => {
     }
   };
 
-  const filteredMembers = members.filter(
-    (member) =>
-      member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      member.phone.includes(searchTerm)
-  );
+  const filteredMembers = members
+    .filter(
+      (member) =>
+        member.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        member.phone.includes(searchTerm)
+    )
+    .sort((a, b) => {
+      const statusA = calculateStatus(a.membership_end);
+      const statusB = calculateStatus(b.membership_end);
+      const priority: Record<string, number> = { Expired: 0, Due: 1, Active: 2 };
+      if (priority[statusA] !== priority[statusB]) {
+        return priority[statusA] - priority[statusB];
+      }
+      // Within same status, sort by closest expiry date first
+      return new Date(a.membership_end).getTime() - new Date(b.membership_end).getTime();
+    });
 
   // --- Modal Opening Handlers ---
   const handleRenew = (member: Member) => {
