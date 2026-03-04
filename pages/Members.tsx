@@ -164,7 +164,17 @@ export const Members: React.FC = () => {
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      setMembers(data || []);
+      // Sort once on fetch: Expired → Due → Active, closest expiry first
+      const sorted = (data || []).sort((a: Member, b: Member) => {
+        const statusA = calculateStatus(a.membership_end);
+        const statusB = calculateStatus(b.membership_end);
+        const priority: Record<string, number> = { Expired: 0, Due: 1, Active: 2 };
+        if (priority[statusA] !== priority[statusB]) {
+          return priority[statusA] - priority[statusB];
+        }
+        return new Date(a.membership_end).getTime() - new Date(b.membership_end).getTime();
+      });
+      setMembers(sorted);
     } catch (err) {
       showToast('Failed to fetch members.', 'error');
     } finally {
@@ -180,16 +190,7 @@ export const Members: React.FC = () => {
         const matchesStatus = statusFilter === 'All' || calculateStatus(member.membership_end) === statusFilter;
         return matchesSearch && matchesStatus;
       }
-    )
-    .sort((a, b) => {
-      const statusA = calculateStatus(a.membership_end);
-      const statusB = calculateStatus(b.membership_end);
-      const priority: Record<string, number> = { Expired: 0, Due: 1, Active: 2 };
-      if (priority[statusA] !== priority[statusB]) {
-        return priority[statusA] - priority[statusB];
-      }
-      return new Date(a.membership_end).getTime() - new Date(b.membership_end).getTime();
-    });
+    );
 
   // --- Modal Opening Handlers ---
   const handleRenew = (member: Member) => {
@@ -270,7 +271,10 @@ export const Members: React.FC = () => {
 
       showToast(`Renewed until ${newEndDateStr}`, 'success');
       setIsRenewModalOpen(false);
-      fetchMembers();
+      // Update member in-place so card doesn't jump position
+      setMembers(prev => prev.map(m =>
+        m.id === selectedMember.id ? { ...m, membership_end: newEndDateStr, renewal_reminder: false } : m
+      ));
     } catch (err) {
       showToast('Failed to renew.', 'error');
     } finally {
