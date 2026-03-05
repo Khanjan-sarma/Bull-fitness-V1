@@ -138,6 +138,7 @@ export const Members: React.FC = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [paymentsLoading, setPaymentsLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingPayment, setEditingPayment] = useState<{ id: string; amount: string; paid_on: string } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error') => {
     setToast({ message, type });
@@ -328,6 +329,24 @@ export const Members: React.FC = () => {
       showToast('Payment deleted.', 'success');
     } catch (err) {
       showToast('Failed to delete payment.', 'error');
+    }
+  };
+
+  const updatePayment = async () => {
+    if (!editingPayment) return;
+    try {
+      const { error } = await supabase
+        .from('payments')
+        .update({ amount: parseFloat(editingPayment.amount), paid_on: editingPayment.paid_on })
+        .eq('id', editingPayment.id);
+      if (error) throw error;
+      setPayments(prev => prev.map(p =>
+        p.id === editingPayment.id ? { ...p, amount: parseFloat(editingPayment.amount), paid_on: editingPayment.paid_on } : p
+      ));
+      setEditingPayment(null);
+      showToast('Payment updated.', 'success');
+    } catch (err) {
+      showToast('Failed to update payment.', 'error');
     }
   };
 
@@ -627,24 +646,72 @@ export const Members: React.FC = () => {
               <p className="text-center py-10 text-gray-400 font-bold uppercase text-[10px] tracking-widest">No payments found</p>
             ) : (
               payments.map(p => (
-                <div key={p.id} className="bg-bullGray p-4 rounded-2xl flex items-center justify-between border border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-white rounded-lg text-emerald-600"><DollarSign className="h-4 w-4" /></div>
-                    <div>
-                      <p className="text-sm font-black text-bullDark">₹{p.amount}</p>
-                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.paid_on}</p>
+                <div key={p.id} className="bg-bullGray p-4 rounded-2xl border border-gray-100">
+                  {editingPayment && editingPayment.id === p.id ? (
+                    <div className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Amount (₹)</label>
+                          <input
+                            type="number"
+                            value={editingPayment.amount}
+                            onChange={e => setEditingPayment({ ...editingPayment, amount: e.target.value })}
+                            className="w-full bg-white border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[9px] font-black uppercase tracking-widest text-gray-400 block mb-1">Date</label>
+                          <input
+                            type="date"
+                            value={editingPayment.paid_on}
+                            onChange={e => setEditingPayment({ ...editingPayment, paid_on: e.target.value })}
+                            className="w-full bg-white border-none rounded-lg px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-bullRed"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2 justify-end">
+                        <button
+                          onClick={() => setEditingPayment(null)}
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest text-gray-500 hover:bg-gray-200 transition-all"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          onClick={updatePayment}
+                          className="px-3 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-widest bg-bullRed text-white hover:bg-red-700 transition-all"
+                        >
+                          Save
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest">Success</span>
-                    <button
-                      onClick={() => deletePayment(p.id)}
-                      className="p-1.5 rounded-lg text-gray-300 hover:text-bullRed hover:bg-red-50 transition-all"
-                      title="Delete payment"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  ) : (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-white rounded-lg text-emerald-600"><DollarSign className="h-4 w-4" /></div>
+                        <div>
+                          <p className="text-sm font-black text-bullDark">₹{p.amount}</p>
+                          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{p.paid_on}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 rounded-full text-[9px] font-black uppercase tracking-widest">Success</span>
+                        <button
+                          onClick={() => setEditingPayment({ id: p.id, amount: String(p.amount), paid_on: p.paid_on })}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-bullDark hover:bg-gray-200 transition-all"
+                          title="Edit payment"
+                        >
+                          <Edit2 className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => deletePayment(p.id)}
+                          className="p-1.5 rounded-lg text-gray-300 hover:text-bullRed hover:bg-red-50 transition-all"
+                          title="Delete payment"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))
             )}
